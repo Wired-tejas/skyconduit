@@ -1,0 +1,60 @@
+version: "3.8"
+
+networks:
+  skyconduit-net:
+    driver: bridge
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: skyconduit-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - skyconduit-net
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: skyconduit-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+    networks:
+      - skyconduit-net
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: skyconduit-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:5001
+    networks:
+      - skyconduit-net
+    depends_on:
+      - backend
+
+volumes:
+  redis_data:
+    driver: local
