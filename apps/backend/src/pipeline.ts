@@ -116,11 +116,6 @@ function fetchSourceStream(urlStr: string): Promise<{ stream: http.IncomingMessa
   });
 }
 
-/**
- * Executes a zero-buffer, memory-bounded remote-to-remote file transfer.
- * Data flows directly from the source response stream, through the telemetry transformer,
- * and into the target destination upload request stream.
- */
 export async function executeTransferPipeline(
   sourceUrl: string,
   destinationUrl: string,
